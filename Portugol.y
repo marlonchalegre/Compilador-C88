@@ -169,29 +169,29 @@ expressao:
                                     }*/
 
         | expressao '+' expressao   {
-                                        sprintf(command,"\tMOV AX, %s\n\tADD AX, %s\n\tMOV CX, AX\n", $1->tval, $3->tval);
+                                        sprintf(command,"\tMOV AX, %s\n\tADD AX, %s\n\tMOV DX, AX\n", $1->tval, $3->tval);
                                         $$ = mnemonico($1, $3, strdup(command));
                                     }
 
         | expressao '-' expressao   {
-                                        sprintf(command,"\tsub(%s, %s, &tp[%d]);\n", $1->tval, $3->tval, tp_count++);
+					sprintf(command,"\tMOV AX, %s\n\tSUB AX, %s\n\tMOV DX, AX\n", $1->tval, $3->tval);
                                         $$ = mnemonico($1, $3, strdup(command));
                                     }
 
-        | expressao '*' expressao   { 
-                                        sprintf(command,"\tmult(%s, %s, &tp[%d]);\n", $1->tval, $3->tval, tp_count++);
+        | expressao '*' expressao   {
+					sprintf(command,"\tMOV AX, %s\n\tMOV CX, %s\n\tMUL CX\n\tMOV DX, AX\n", $1->tval, $3->tval);
                                         $$ = mnemonico($1, $3, strdup(command));
                                     }
 
         | expressao '/' expressao   {
-                                        sprintf(command,"\tdivi(%s, %s, &tp[%d]);\n", $1->tval, $3->tval, tp_count++);
+					sprintf(command,"\tMOV AX, %s\n\tMOV CX, %s\n\tDIV CX\n\tMOV DX, AX\n", $1->tval, $3->tval);
                                         $$ = mnemonico($1, $3, strdup(command));
                                     }
 
-        | expressao '%' expressao   {
+       /* | expressao '%' expressao   {
                                         sprintf(command,"\tmod(%s, %s, &tp[%d]);\n", $1->tval, $3->tval, tp_count++);
                                         $$ = mnemonico($1, $3, strdup(command));
-                                    }
+                                    }*/
 
         | '-' expressao %prec UMINUS {
                                         sprintf(command,"\tuminus(%s, NULL, &tp[%d]);\n", $2->tval, tp_count++);
@@ -507,7 +507,7 @@ tabelaSimb *mnemonico(tabelaSimb *s1, tabelaSimb *s2, char cmd[100]) {
 
     enqueue(queue_geral, cmd);
 
-    sprintf(command, "CX");
+    sprintf(command, "DX");
     s->tval = strdup(command);
     s->load = 1;
     return s;
@@ -785,7 +785,7 @@ int main(int argc, char **argv) {
     yyparse();
     if (argc > 1) fclose(yyin);    
 
-    fprintf(file,"\tPUSH _EXIT\n\tSYS\n.SECT .DATA \n\n");
+    fprintf(file,"\tPUSH 0\n\tPUSH _EXIT\n\tSYS\n.SECT .DATA \n\n");
     //criar_filltf();
     fclose(file);
     geraSaidaH();
