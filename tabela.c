@@ -4,7 +4,7 @@
 #include "Tabela.h"
 
 char buffer[100];
-int idxId = 0;
+int idxId = 10;
 int idxFunc = 0;
 int idxCon = 0;
 
