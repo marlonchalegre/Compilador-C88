@@ -3,6 +3,14 @@ int [0-9]
 float ([0-9]*\.[0-9]+)([eE][-+]?[0-9]+)?
 
 %{
+     /*
+        Portugol versao 3 - lex
+        Autores: Ed Prado, Edinaldo Carvalho, Elton Oliveira
+                 Marlon Chalegre, Rodrigo Castro
+        Emails: {msgprado, truetypecode, elton.oliver,
+                 marlonchalegre, rodrigomsc}@gmail.com
+    */
+ 
     #include "quadruplas.h"
     #include "y.tab.h"
     #include <stdlib.h>
@@ -18,15 +26,6 @@ float ([0-9]*\.[0-9]+)([eE][-+]?[0-9]+)?
         if (i < size)
             s[i] = '\0';
     }
-
-//"imprima"   { return IMPRIMA; }
-//"para"      { return PARA; }
-//"enquanto"  { return ENQUANTO; }
-//"se"        { return IF; }
-//"aborte"    { return ABORTE; }
-//"saia"      { return SAIA; }
-
-
 %}
 %%
 
@@ -67,32 +66,24 @@ float ([0-9]*\.[0-9]+)([eE][-+]?[0-9]+)?
                         trim(val); /* Elimina espacos e tabulacoes extras */
                         yyless(yyleng-1);
                         if (!strcmp(val, "ou")) {
-                        //    yyless(yyleng-1);
                             return OR;
                         }
                         else if (!strcmp(val, "e")) {
-                        //    yyless(yyleng-1);
                             return AND;
                         }
                         else if (!strcmp(val, "nao")) {
-                         //   yyless(yyleng-1);
                             return NOT;
-
                         }
                         else if (!strcmp(val, "para")) {
-                        //    yyless(yyleng-1);
                             return PARA;
                         }
                         else if (!strcmp(val, "enquanto")) {
-                        //    yyless(yyleng-1);
                             return ENQUANTO;
                         }
                         else if (!strcmp(val, "se")) {
-                        //    yyless(yyleng-1);
                             return IF;
                         }
                         else if (!strcmp(val, "aborte")) {
-                        //    yyless(yyleng-1);
                             return ABORTE;
                         }
                         yylval.tb = achaFuncs(val);

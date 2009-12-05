@@ -70,7 +70,7 @@ declaracao:
                                 verificaUso($2); 
                                 $2->tipoD = tipoIdInt; 
                                 $2->load = 1;
-                                sprintf(command, "\tMOV (%d) 0\n", $2->idx);
+                                sprintf(command, "\tMOV (%d), 0\n", $2->idx);
                                 enqueue(queue_geral, strdup(command));
                           }
         /*| TEXTO ATOMO {
@@ -86,7 +86,7 @@ declaracao:
 atribuicao:
         ATOMO '=' expressao {
                                         validaTipoAtribuicao($1, $3);
-                                        sprintf(command,"\tMOV (%d) %s\n", $1->idx, $3->tval);
+                                        sprintf(command,"\tMOV (%d), %s\n", $1->idx, $3->tval);
                                         enqueue(queue_geral, strdup(command) );
                                         $$ = $3;
 				    }
@@ -169,7 +169,7 @@ expressao:
                                     }*/
 
         | expressao '+' expressao   {
-                                        sprintf(command,"\tMOV AX %s\n\tADD AX %s\n", $1->tval, $3->tval);
+                                        sprintf(command,"\tMOV AX, %s\n\tADD AX, %s\n\tMOV CX, AX\n", $1->tval, $3->tval);
                                         $$ = mnemonico($1, $3, strdup(command));
                                     }
 
@@ -476,7 +476,7 @@ imprimir_label: {
 %%
 
 void load(tabelaSimb *s) {
-    switch (s->tipoD) {
+    /*switch (s->tipoD) {
         case tipoConInt:
             sprintf(command, "\tloadi(%d, NULL, &%s);\n", s->ival, s->tval);
             break;
@@ -488,9 +488,9 @@ void load(tabelaSimb *s) {
             break;
         default:
             return;
-    }
+    }*/
     s->load = 1;
-    enqueue(queue_geral, strdup(command));
+    //enqueue(queue_geral, strdup(command));
 }
 
 tabelaSimb *mnemonico(tabelaSimb *s1, tabelaSimb *s2, char cmd[100]) {
@@ -647,20 +647,20 @@ void verificaUso(tabelaSimb *s) {
 
 void geraSaidaTemplate(FILE *file) {
     fprintf(file,
-                ";\tGerado pelo compilador PORTUGOL versao 0.1\n"
-                ";\tAutores: Ed Prado, Edinaldo Carvalho, Elton Oliveira,\n"
-                ";\t\t Marlon Chalegre, Rodrigo Castro\n"
-                ";\tEmail: {msgprado, truetypecode, elton.oliver,\n"
-                ";\t\tmarlonchalegre, rodrigomsc}@gmail.com\n"
-                ";\tData: 26/05/2009\n"
-                ";\n#include <stdlib.h>\n"
-                ";#include \"quadruplas.h\"\n"
-                ";#include \"saida.h\"\n\n"
-                ";void filltf();\n\n"                
-                ";int main(void)\n{\n"
-                ";\tfilltf();\n\n"
-		"\t_EXIT = 1\n"
-		"\t.SECT .TEXT\n"
+                "!\tGerado pelo compilador PORTUGOL versao 0.1\n"
+                "!\tAutores: Ed Prado, Edinaldo Carvalho, Elton Oliveira,\n"
+                "!\t\t Marlon Chalegre, Rodrigo Castro\n"
+                "!\tEmail: {msgprado, truetypecode, elton.oliver,\n"
+                "!\t\tmarlonchalegre, rodrigomsc}@gmail.com\n"
+                "!\tData: 26/05/2009\n"
+                //";\n#include <stdlib.h>\n"
+                //";#include \"quadruplas.h\"\n"
+                //";#include \"saida.h\"\n\n"
+                //";void filltf();\n\n"                
+                //";int main(void)\n{\n"
+                //";\tfilltf();\n\n"
+		"_EXIT = 1\n"
+		".SECT .TEXT\n"
 		"main:\n"
                 );
 }
@@ -750,7 +750,7 @@ void criar_filltf() {
         }
     }
 
-    fprintf(file, "}\n");
+//    fprintf(file, "}\n");
 }
 
 int main(int argc, char **argv) {
@@ -785,8 +785,8 @@ int main(int argc, char **argv) {
     yyparse();
     if (argc > 1) fclose(yyin);    
 
-    fprintf(file,"\tpush _EXIT\n\tsys\n.SECT .DATA \n");
-    criar_filltf();
+    fprintf(file,"\tPUSH _EXIT\n\tSYS\n.SECT .DATA \n\n");
+    //criar_filltf();
     fclose(file);
     geraSaidaH();
 }

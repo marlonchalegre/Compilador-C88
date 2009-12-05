@@ -87,7 +87,7 @@ tabelaSimb* achaInt(int valor){
                     sp->tipoD = tipoConInt;
                     sp->ival = valor;
                     sp->idx = idxCon++;
-                    sprintf(buffer, "tc[%d]", sp->idx);
+                    sprintf(buffer, "%d", valor);
                     sp->tval = strdup(buffer); 
 		    return sp;
 	        }
