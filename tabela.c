@@ -61,7 +61,7 @@ tabelaSimb* achaId(char *nome) {
                     sp->tipoD = tipoIdIndef;
 		    sp->idNome = strdup(nome); //coloca na tabela de simbolos
                     sp->idx = idxId++;
-                    sprintf(buffer, "ts[%d]", sp->idx);
+                    sprintf(buffer, "(%d)", sp->idx);
                     sp->tval = strdup(buffer);
 		    return sp; 
 	        }

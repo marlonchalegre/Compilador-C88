@@ -1,4 +1,5 @@
 inicio;
 int a;
 a = 2 + 3;
+a = a + 3;
 fim;
