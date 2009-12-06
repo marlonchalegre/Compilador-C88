@@ -99,32 +99,62 @@ atribuicao:
 
 expressao_relacional:
         expressao '>' expressao {
-                                        sprintf(command,"\tcomp_gt(%s, %s, &tp[%d]);\n", $1->tval, $3->tval, tp_count++);
+                                        sprintf(command,
+						"\tMOV AX, %s\n"
+						"\tMOV CX, %s\n"
+						"\tCMP AX, CX\n"
+						"\tJLE ",
+						$1->tval, $3->tval);
                                         $$ = mnemonico($1, $3, strdup(command));
                                 }
 
 	| expressao '<' expressao {
-                                        sprintf(command, "\tcomp_lt(%s, %s, &tp[%d]);\n", $1->tval, $3->tval, tp_count++);
+					sprintf(command,
+						"\tMOV AX, %s\n"
+						"\tMOV CX, %s\n"
+						"\tCMP AX, CX\n"
+						"\tJGE ",
+						$1->tval, $3->tval);
                                         $$ = mnemonico($1, $3, strdup(command));
                                   }
 
 	| expressao MENORIGUAL expressao {
-                                            sprintf(command, "\tcomp_le(%s, %s, &tp[%d]);\n", $1->tval, $3->tval, tp_count++);
+					sprintf(command,
+						"\tMOV AX, %s\n"
+						"\tMOV CX, %s\n"
+						"\tCMP AX, CX\n"
+						"\tJG ",
+						$1->tval, $3->tval);
                                             $$ = mnemonico($1, $3, strdup(command));
                                          }
 
 	| expressao MAIORIGUAL expressao {
-                                            sprintf(command, "\tcomp_ge(%s, %s, &tp[%d]);\n", $1->tval, $3->tval, tp_count++);
+					sprintf(command,
+						"\tMOV AX, %s\n"
+						"\tMOV CX, %s\n"
+						"\tCMP AX, CX\n"
+						"\tJL ",
+						$1->tval, $3->tval);
                                             $$ = mnemonico($1, $3, strdup(command));
                                          }
 
 	| expressao IGUAL expressao {
-                                        sprintf(command, "\tcomp_eq(%s, %s, &tp[%d]);\n", $1->tval, $3->tval, tp_count++);
+					sprintf(command,
+						"MOV AX, %s\n"
+						"MOV CX, %s\n"
+						"CMP AX, CX\n"
+						"JNE ",
+						$1->tval, $3->tval);
                                         $$ = mnemonico($1, $3, strdup(command));
                                     }
 
         | expressao DIFERENTE expressao {
-                                            sprintf(command, "\tcomp_ne(%s, %s, &tp[%d]);\n", $1->tval, $3->tval, tp_count++);
+					sprintf(command,
+						"MOV AX, %s\n"
+						"MOV CX, %s\n"
+						"CMP AX, CX\n"
+						"JE ",
+						$1->tval, $3->tval);
                                             $$ = mnemonico($1, $3, strdup(command));
                                         }
         ;
@@ -169,7 +199,11 @@ expressao:
                                     }*/
 
         | expressao '+' expressao   {
-                                        sprintf(command,"\tMOV AX, %s\n\tADD AX, %s\n\tMOV DX, AX\n", $1->tval, $3->tval);
+                                        sprintf(command,
+						"\tMOV AX, %s\n"
+						"\tADD AX, %s\n"
+						"\tMOV DX, AX\n",
+						$1->tval, $3->tval);
                                         $$ = mnemonico($1, $3, strdup(command));
                                     }
 
@@ -334,7 +368,7 @@ label_enquanto_inicio: {
                        ;
 label_enquanto_fim: {
                         int *label = (int *) pop(stack_enquanto);
-                        sprintf(command, "\tjump(NULL, NULL, l%d);\n", *label-1);
+                        sprintf(command, "\tJMP l%d\n", *label-1);
                         enqueue(queue_geral,strdup(command));
                         sprintf(command, "l%d:\n", *label); 
                         enqueue(queue_geral,strdup(command));
@@ -343,7 +377,7 @@ label_enquanto_fim: {
                     ;
 inicio_enquanto: {
                     push(stack_enquanto,(void *) copy_int(l));
-                    sprintf(command,"\tjump_f(tp[%d], NULL, l%d);\n", tp_count-1, (*l)++);
+                    sprintf(command,"l%d\n", (*l)++);
                     enqueue(queue_geral,strdup(command));
                  }
                  ;
@@ -353,7 +387,7 @@ enquanto:
 
 inicio_selecao: {
                 push(stack_if, (void *) copy_int(l));
-                sprintf(command,"\tjump_f(tp[%d], NULL, l%d);\n", tp_count-1, (*l)++);
+                sprintf(command,"l%d\n", (*l)++);
                 enqueue(queue_geral,strdup(command));
                 count_if_else++;
            }
@@ -624,7 +658,7 @@ void desempilhar(void) {
     while (!is_queue_empty(queue_geral)) {
         value = dequeue(queue_geral);
         if (!strcmp(value, "jump_incondicional")) {
-            fprintf(file, "\tjump(NULL, NULL, l%d);\n", *l);
+            fprintf(file, "\tJMP l%d\n", *l);
         }
         else {
             fprintf(file,"%s",value);

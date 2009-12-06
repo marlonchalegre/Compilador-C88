@@ -4,9 +4,9 @@
 #include "Tabela.h"
 
 char buffer[100];
-int idxId = 10;
+int idxId = 30;
 int idxFunc = 0;
-int idxCon = 0;
+int idxCon = 30;
 
 void geraSaidaH() {
     FILE *file;
@@ -60,7 +60,8 @@ tabelaSimb* achaId(char *nome) {
                     sp->load = 0;
                     sp->tipoD = tipoIdIndef;
 		    sp->idNome = strdup(nome); //coloca na tabela de simbolos
-                    sp->idx = idxId++;
+                    sp->idx = idxId;
+		    idxId += 2;
                     sprintf(buffer, "(%d)", sp->idx);
                     sp->tval = strdup(buffer);
 		    return sp; 

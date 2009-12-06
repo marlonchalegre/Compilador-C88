@@ -1,0 +1,13 @@
+inicio;
+int a;
+int b;
+b = 1;
+a = 1;
+enquanto ( a < 10 )
+  inicio;
+    b = b + 1;
+    a = a + 1;
+  fim;
+2 + 2;
+fim;
+

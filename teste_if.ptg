@@ -1,0 +1,7 @@
+inicio;
+se (4 == 4) entao 
+  2 + 2;
+senao
+  4 + 4;
+3 + 3;
+fim;
