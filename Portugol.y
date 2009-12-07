@@ -260,19 +260,55 @@ expressao:
                                     }
 
         | expressao '-' expressao   {
-					sprintf(command,"\tMOV AX, %s\n\tSUB AX, %s\n\tMOV DX, AX\n", $1->tval, $3->tval);
+					sprintf(command,
+						"\tMOV AX, %s\n"
+						"\tSUB AX, %s\n"
+						"\tMOV DX, AX\n",
+						$1->tval, $3->tval);
                                         $$ = mnemonico($1, $3, strdup(command));
                                     }
 
         | expressao '*' expressao   {
-					sprintf(command,"\tMOV AX, %s\n\tMOV CX, %s\n\tMUL CX\n\tMOV DX, AX\n", $1->tval, $3->tval);
+					sprintf(command,
+						"\tMOV AX, %s\n"
+						"\tMOV CX, %s\n"
+						"\tMUL CX\n"
+						"\tMOV DX, AX\n",
+						$1->tval, $3->tval);
                                         $$ = mnemonico($1, $3, strdup(command));
                                     }
 
         | expressao '/' expressao   {
-					sprintf(command,"\tMOV AX, %s\n\tMOV CX, %s\n\tDIV CX\n\tMOV DX, AX\n", $1->tval, $3->tval);
+					sprintf(command,
+						"\tMOV AX, %s\n"
+						"\tMOV CX, %s\n"
+						"\tDIV CX\n"
+						"\tMOV DX, AX\n",
+						$1->tval, $3->tval);
                                         $$ = mnemonico($1, $3, strdup(command));
                                     }
+	| '+''+'expressao	    {
+					if ($3->tipoD != tipoIdInt) {
+					    yyerror("Atribuicao invalida.");
+					}
+					sprintf(command,
+						"\tINC %s\n"
+						"\tMOV DX, %s\n",
+						$3->tval, $3->tval);
+                                        $$ = mnemonico($3, NULL, strdup(command));
+				    }
+	| expressao'+''+'	    {
+					if ($1->tipoD != tipoIdInt) {
+					    yyerror("Atribuicao invalida.");
+					}
+
+					sprintf(command,
+						"\tMOV DX, %s\n"
+						"\tINC %s\n",
+						$1->tval, $1->tval);
+                                        $$ = mnemonico($1, NULL, strdup(command));
+
+				    }
 
        /* | expressao '%' expressao   {
                                         sprintf(command,"\tmod(%s, %s, &tp[%d]);\n", $1->tval, $3->tval, tp_count++);
@@ -429,6 +465,7 @@ label_enquanto_fim: {
                     ;
 inicio_enquanto: {
                     push(stack_enquanto,(void *) copy_int(l));
+                    //sprintf(command,"l%d\n", (*l)++);
 		    sprintf(command,
 			"\tCMP (%d), 1\n"
 			"\tJNE l%d\n",
@@ -782,9 +819,7 @@ int *copy_int(int *value) {
 void desempilhar(void) {
     char *value; 
     while (!is_queue_empty(queue_geral)) {
-	  //printf("chegou aqui\n");
         value = dequeue(queue_geral);
-	//printf("%s\n", value);
         if (!strcmp(value, "jump_incondicional")) {
             fprintf(file, "\tJMP l%d\n", *l);
         }
