@@ -1,9 +1,9 @@
 /*
-    Compilador PORTUGOL v.2q
-    Autor: Ruben Carlo Benante
-    Email: benante@gmail.com
-    Data criação: 23/04/2009
-    Data modificação: 24/05/2009
+    Portugol versao 3 - Tabela.h
+    Autores: Ed Prado, Edinaldo Carvalho, Elton Oliveira
+             Marlon Chalegre, Rodrigo Castro
+    Emails: {msgprado, truetypecode, elton.oliver,
+             marlonchalegre, rodrigomsc}@gmail.com
 */
 
 #define MAX_SIMB 200
@@ -102,6 +102,7 @@ typedef struct tabelaSimb
       float fval;           //valor da constante real
       char *sval;           //valor da constante texto
       char *tval;           //valor para geracao de codigo 
+      char *mval;	    //valor da posicao temporaria de memoria usada em expressoes logicas
       int numParam;         //numero de parametros recebidos pela funcao
       int (*ifunc)();       //ponteiro para funcao que retorna inteiro
       float (*ffunc)();     //ponteiro para funcao que retorna double

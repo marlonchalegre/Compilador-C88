@@ -64,6 +64,8 @@ tabelaSimb* achaId(char *nome) {
 		    idxId += 2;
                     sprintf(buffer, "(%d)", sp->idx);
                     sp->tval = strdup(buffer);
+                    sprintf(buffer, "(%d)", sp->idx);
+		    sp->mval = strdup(buffer);
 		    return sp; 
 	        }
 	}
@@ -90,6 +92,8 @@ tabelaSimb* achaInt(int valor){
                     sp->idx = idxCon++;
                     sprintf(buffer, "%d", valor);
                     sp->tval = strdup(buffer); 
+                    sprintf(buffer, "%d", valor);
+                    sp->mval = strdup(buffer); 
 		    return sp;
 	        }
 	}

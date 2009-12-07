@@ -1,0 +1,9 @@
+inicio;
+int a;
+a = 3;
+int b;
+b = 4;
+se (a == 3 e b > 2) entao
+  3 + 3;
+4 + 4;
+fim;

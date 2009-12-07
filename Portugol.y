@@ -21,6 +21,8 @@
     void verificaUso(tabelaSimb *s);
     int yylineno;
     int tp_count = 0;
+    int cond_count = 1;
+    int cond_mem = 500;
     int *l;
     int count_if_else = 0;
     int count_para = 0;
@@ -31,7 +33,7 @@
     Stack *stack_para_label;
     Stack *stack_para_atribuicao;
     Queue *queue_geral;
-    char command[100];
+    char command[500];
 %}
 
 %union {
@@ -103,8 +105,16 @@ expressao_relacional:
 						"\tMOV AX, %s\n"
 						"\tMOV CX, %s\n"
 						"\tCMP AX, CX\n"
-						"\tJLE ",
-						$1->tval, $3->tval);
+						"\tJLE cond%d\n"
+						"\tMOV (%d), 1\n"
+						"\tJMP cond%d\n"
+						"cond%d:\n"
+						"\tMOV (%d), 0\n"
+						"cond%d:\n",
+						$1->tval, $3->tval, cond_count, cond_mem,
+						cond_count + 1, cond_count, cond_mem, cond_count + 1);
+					cond_count += 2;
+					cond_mem += 2;
                                         $$ = mnemonico($1, $3, strdup(command));
                                 }
 
@@ -113,8 +123,17 @@ expressao_relacional:
 						"\tMOV AX, %s\n"
 						"\tMOV CX, %s\n"
 						"\tCMP AX, CX\n"
-						"\tJGE ",
-						$1->tval, $3->tval);
+						"\tJGE cond%d\n"
+						"\tMOV (%d), 1\n"
+						"\tJMP cond%d\n"
+						"cond%d:\n"
+						"\tMOV (%d), 0\n"
+						"cond%d:\n",
+						$1->tval, $3->tval, cond_count, cond_mem,
+						cond_count + 1, cond_count, cond_mem, cond_count + 1);
+					cond_count += 2;
+					cond_mem += 2;
+
                                         $$ = mnemonico($1, $3, strdup(command));
                                   }
 
@@ -123,8 +142,16 @@ expressao_relacional:
 						"\tMOV AX, %s\n"
 						"\tMOV CX, %s\n"
 						"\tCMP AX, CX\n"
-						"\tJG ",
-						$1->tval, $3->tval);
+						"\tJG cond%d\n"
+						"\tMOV (%d), 1\n"
+						"\tJMP cond%d\n"
+						"cond%d:\n"
+						"\tMOV (%d), 0\n"
+						"cond%d:\n",
+						$1->tval, $3->tval, cond_count, cond_mem,
+						cond_count + 1, cond_count, cond_mem, cond_count + 1);
+					cond_count += 2;
+					cond_mem += 2;
                                             $$ = mnemonico($1, $3, strdup(command));
                                          }
 
@@ -133,28 +160,52 @@ expressao_relacional:
 						"\tMOV AX, %s\n"
 						"\tMOV CX, %s\n"
 						"\tCMP AX, CX\n"
-						"\tJL ",
-						$1->tval, $3->tval);
+						"\tJL cond%d\n"
+						"\tMOV (%d), 1\n"
+						"\tJMP cond%d\n"
+						"cond%d:\n"
+						"\tMOV (%d), 0\n"
+						"cond%d:\n",
+						$1->tval, $3->tval, cond_count, cond_mem,
+						cond_count + 1, cond_count, cond_mem, cond_count + 1);
+					cond_count += 2;
+					cond_mem += 2;
                                             $$ = mnemonico($1, $3, strdup(command));
                                          }
 
 	| expressao IGUAL expressao {
 					sprintf(command,
-						"MOV AX, %s\n"
-						"MOV CX, %s\n"
-						"CMP AX, CX\n"
-						"JNE ",
-						$1->tval, $3->tval);
+						"\tMOV AX, %s\n"
+						"\tMOV CX, %s\n"
+						"\tCMP AX, CX\n"
+						"\tJNE cond%d\n"
+						"\tMOV (%d), 1\n"
+						"\tJMP cond%d\n"
+						"cond%d:\n"
+						"\tMOV (%d), 0\n"
+						"cond%d:\n",
+						$1->tval, $3->tval, cond_count, cond_mem,
+						cond_count + 1, cond_count, cond_mem, cond_count + 1);
+					cond_count += 2;
+					cond_mem += 2;
                                         $$ = mnemonico($1, $3, strdup(command));
                                     }
 
         | expressao DIFERENTE expressao {
 					sprintf(command,
-						"MOV AX, %s\n"
-						"MOV CX, %s\n"
-						"CMP AX, CX\n"
-						"JE ",
-						$1->tval, $3->tval);
+						"\tMOV AX, %s\n"
+						"\tMOV CX, %s\n"
+						"\tCMP AX, CX\n"
+						"\tJE cond%d\n"
+						"\tMOV (%d), 1\n"
+						"\tJMP cond%d\n"
+						"cond%d:\n"
+						"\tMOV (%d), 0\n"
+						"cond%d:\n",
+						$1->tval, $3->tval, cond_count, cond_mem,
+						cond_count + 1, cond_count, cond_mem, cond_count + 1);
+					cond_count += 2;
+					cond_mem += 2;
                                             $$ = mnemonico($1, $3, strdup(command));
                                         }
         ;
@@ -163,6 +214,7 @@ expressao:
         ATOMO                       { 
                                         tabelaSimb *s = alloc_tabelaSimb();
                                         s->tval = strdup($1->tval);
+                                        s->mval = strdup($1->mval);
                                         s->tipoD = $1->tipoD;
                                         if (!$1->load) {
                                             load($1);
@@ -362,7 +414,7 @@ para:
     ;
 
 label_enquanto_inicio: {
-                            sprintf(command, " l%d:\n", (*l)++);
+                            sprintf(command, "l%d:\n", (*l)++);
                             enqueue(queue_geral,strdup(command));
                        }
                        ;
@@ -377,7 +429,11 @@ label_enquanto_fim: {
                     ;
 inicio_enquanto: {
                     push(stack_enquanto,(void *) copy_int(l));
-                    sprintf(command,"l%d\n", (*l)++);
+		    sprintf(command,
+			"\tCMP (%d), 1\n"
+			"\tJNE l%d\n",
+			cond_mem - 2, *l);
+		    (*l)++;
                     enqueue(queue_geral,strdup(command));
                  }
                  ;
@@ -387,7 +443,12 @@ enquanto:
 
 inicio_selecao: {
                 push(stack_if, (void *) copy_int(l));
-                sprintf(command,"l%d\n", (*l)++);
+                sprintf(command,
+			"\tCMP (%d), 1\n"
+			"\tJNE l%d\n",
+			cond_mem - 2, *l);
+		//printf("\n\nFILA: %s\n\n", command);
+		(*l)++;
                 enqueue(queue_geral,strdup(command));
                 count_if_else++;
            }
@@ -395,7 +456,8 @@ inicio_selecao: {
 
 label_selecao: {
                     int *label = (int *) pop(stack_if);
-                    sprintf(command, " l%d:\n", *label);
+                    sprintf(command, "l%d:\n", *label);
+		    //printf("\n\nFILA: %s\n\n", command);
                     enqueue(queue_geral,strdup(command));
                     free(label);
                }
@@ -416,23 +478,84 @@ expressao_logica:
                                      }
 
                 | expressao_relacional AND expressao_logica {
-                                                                sprintf(command, "\trela_an(%s, %s, &tp[%d]);\n", $1->tval, $3->tval, tp_count++);
+								//printf("logico: %s %s\n", $1->mval, $3->mval);
+                                                                sprintf(command,
+									"\tMOV AX, %s\n"
+									"\tAND AX, %s\n"
+									"\tJE cond%d\n"
+									"\tMOV (%d), 1\n"
+									"\tJMP cond%d\n"
+									"cond%d:\n"
+									"\tMOV (%d), 0\n"
+									"cond%d:\n",
+									$1->mval, $3->mval, cond_count, cond_mem,
+									cond_count + 1, cond_count, cond_mem, cond_count + 1);
+								cond_count += 2;
+								cond_mem += 2;
                                                                 $$ = mnemonico($1, $3, strdup(command));
                                                             }
                 | expressao_logica AND expressao_relacional { 
-                                                                sprintf(command, "\trela_an(%s, %s, &tp[%d]);\n", $1->tval, $3->tval, tp_count++);
+								sprintf(command,
+									"\tMOV AX, %s\n"
+									"\tAND AX, %s\n"
+									"\tJE cond%d\n"
+									"\tMOV (%d), 1\n"
+									"\tJMP cond%d\n"
+									"cond%d:\n"
+									"\tMOV (%d), 0\n"
+									"cond%d:\n",
+									$1->mval, $3->mval, cond_count, cond_mem,
+									cond_count + 1, cond_count, cond_mem, cond_count + 1);
+								cond_count += 2;
+								cond_mem += 2;
                                                                 $$ = mnemonico($1, $3, strdup(command));
                                                             }
                 | expressao_logica OR expressao_relacional {
-                                                                sprintf(command, "\trela_or(%s, %s, &tp[%d]);\n", $1->tval, $3->tval, tp_count++);
+								sprintf(command,
+									"\tMOV AX, %s\n"
+									"\tOR AX, %s\n"
+									"\tJE cond%d\n"
+									"\tMOV (%d), 1\n"
+									"\tJMP cond%d\n"
+									"cond%d:\n"
+									"\tMOV (%d), 0\n"
+									"cond%d:\n",
+									$1->mval, $3->mval, cond_count, cond_mem,
+									cond_count + 1, cond_count, cond_mem, cond_count + 1);
+								cond_count += 2;
+								cond_mem += 2;
                                                                 $$ = mnemonico($1, $3, strdup(command));
                                                            }
                 | expressao_relacional OR expressao_logica {
-                                                                sprintf(command, "\trela_or(%s, %s, &tp[%d]);\n", $1->tval, $3->tval, tp_count++);
+								sprintf(command,
+									"\tMOV AX, %s\n"
+									"\tOR AX, %s\n"
+									"\tJE cond%d\n"
+									"\tMOV (%d), 1\n"
+									"\tJMP cond%d\n"
+									"cond%d:\n"
+									"\tMOV (%d), 0\n"
+									"cond%d:\n",
+									$1->mval, $3->mval, cond_count, cond_mem,
+									cond_count + 1, cond_count, cond_mem, cond_count + 1);
+								cond_count += 2;
+								cond_mem += 2;
                                                                 $$ = mnemonico($1, $3, strdup(command));
                                                            }
                 | NOT expressao_logica {
-                                            sprintf(command, "\trela_no(%s, NULL, &tp[%d]);\n", $2->tval, tp_count++);
+								sprintf(command,
+									"\tMOV AX, %s\n"
+									"\tCMP AX, 1\n"
+									"\tJE cond%d\n"
+									"\tMOV (%d), 1\n"
+									"\tJMP cond%d\n"
+									"cond%d:\n"
+									"\tMOV (%d), 0\n"
+									"cond%d:\n",
+									$2->mval, cond_count, cond_mem,
+									cond_count + 1, cond_count, cond_mem, cond_count + 1);
+								cond_count += 2;
+								cond_mem += 2;
                                             $$ = mnemonico($2, NULL, strdup(command));
                                        }
 
@@ -470,7 +593,7 @@ instrucao:
                     desempilhar();
                     count_if_else--;
                     if (!count_if_else) { // label de jump incondicional
-                        fprintf(file, " l%d:\n", (*l)++);
+                        fprintf(file, "l%d:\n", (*l)++);
                         fflush(file);
                     }
                 }
@@ -527,7 +650,7 @@ void load(tabelaSimb *s) {
     //enqueue(queue_geral, strdup(command));
 }
 
-tabelaSimb *mnemonico(tabelaSimb *s1, tabelaSimb *s2, char cmd[100]) {
+tabelaSimb *mnemonico(tabelaSimb *s1, tabelaSimb *s2, char cmd[500]) {
     tabelaSimb *s = alloc_tabelaSimb();
 
     if (s2 != NULL) {
@@ -543,6 +666,9 @@ tabelaSimb *mnemonico(tabelaSimb *s1, tabelaSimb *s2, char cmd[100]) {
 
     sprintf(command, "DX");
     s->tval = strdup(command);
+    //printf("(%d)\n", cond_mem -2);
+    sprintf(command, "(%d)", cond_mem - 2);
+    s->mval = strdup(command);
     s->load = 1;
     return s;
 }
@@ -656,7 +782,9 @@ int *copy_int(int *value) {
 void desempilhar(void) {
     char *value; 
     while (!is_queue_empty(queue_geral)) {
+	  //printf("chegou aqui\n");
         value = dequeue(queue_geral);
+	//printf("%s\n", value);
         if (!strcmp(value, "jump_incondicional")) {
             fprintf(file, "\tJMP l%d\n", *l);
         }
