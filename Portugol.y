@@ -16,18 +16,16 @@
     tipoDado defineTipo(tabelaSimb *s1, tabelaSimb *s2);
     tabelaSimb *alloc_tabelaSimb();
     tabelaSimb *mnemonico(tabelaSimb *s1, tabelaSimb *s2, char buffer[]);
-    void imprima_procedimento_read();
+    void gera_procedimento_read();
     void geraSaidaTemplate(FILE *file);
     void load(tabelaSimb *s);
     void verificaUso(tabelaSimb *s);
     int yylineno;
-    int tp_count = 0;
     int cond_count = 1;
     int cond_mem = 500;
     int *l;
     int count_if_else = 0;
     int count_para = 0;
-    int numParam = 0;
     int chamou_leia = 0;
     char msg[80];
     Stack *stack_if;
@@ -45,11 +43,9 @@
 }
 
 %token INICIO FIM
-//%token <tb> IDENTIFICADOR
-//%token <tb> TEXTO
-%token <tb> ATOMO FUNCAO 
+%token <tb> ATOMO
 %token <tipo> TIPO
-%token SQRT INT FLOAT TEXTO 
+%token INT TEXTO 
 %token IF
 %token ENQUANTO PARA
 %token IMPRIMA ABORTE SAIA LEIA 
@@ -95,16 +91,11 @@ declaracao:
 
 atribuicao:
         ATOMO '=' expressao {
-                                        validaTipoAtribuicao($1, $3);
-                                        sprintf(command,"\tMOV (%d), %s\n", $1->idx, $3->tval);
-                                        enqueue(queue_geral, strdup(command) );
-                                        $$ = $3;
-				    }
-        /*| IDENTIFICADOR '=' atribuicao {
-                                            sprintf(command,"\tmov(%s, NULL, &ts[%d]);\n", $3, $1);
-                                            enqueue(queue_geral, strdup(command) );
-                                            $$ = $3;
-                                          }*/
+                                validaTipoAtribuicao($1, $3);
+                                sprintf(command,"\tMOV (%d), %s\n", $1->idx, $3->tval);
+                                enqueue(queue_geral, strdup(command) );
+                                $$ = $3;
+			    }
         ;
 
 expressao_relacional:
@@ -231,33 +222,6 @@ expressao:
 
                                         $$ = s; 
                                     }
-        | FUNCAO '(' lista_parametros ')' {
-                                        tabelaSimb *s = alloc_tabelaSimb();
-                                        if ($1->tipoD == tipoIdFuncVoid) {
-                                            sprintf(command, "\tcall(\"%s\", %d, NULL);\n", $1->idNome, numParam, tp_count++);
-                                            enqueue(queue_geral, strdup(command));
-                                            s->tval = "";
-                                        }
-                                        else {
-                                            sprintf(command, "\tcall(\"%s\", %d, &tp[%d]);\n", $1->idNome, numParam, tp_count++);
-                                            enqueue(queue_geral, strdup(command));
-                                            sprintf(command, "tp[%d]", tp_count-1);
-                                            s->tval = strdup(command);
-                                        }
-                                        $1->numParam = numParam;
-                                        numParam = 0;
-                                        
-                                        s->tipoD = $1->tipoD;
-                                        $$ = s;
-                                      }
-
-        /*| IDENTIFICADOR             { 
-                                        tabelaSimb *s = alloc_tabelaSimb();
-                                        s->tval = strdup($1->tval);
-                                        s->tipoD = $1->tipoD;
-
-                                        $$ = s;
-                                    }*/
 
         | expressao '+' expressao   {
                                         sprintf(command,
@@ -296,6 +260,7 @@ expressao:
 						$1->tval, $3->tval);
                                         $$ = mnemonico($1, $3, strdup(command));
                                     }
+
 	| '+''+'expressao	    {
 					if ($3->tipoD != tipoIdInt) {
 					    yyerror("Atribuicao invalida.");
@@ -306,6 +271,7 @@ expressao:
 						$3->tval, $3->tval);
                                         $$ = mnemonico($3, NULL, strdup(command));
 				    }
+
 	| expressao'+''+'	    {
 					if ($1->tipoD != tipoIdInt) {
 					    yyerror("Atribuicao invalida.");
@@ -319,14 +285,9 @@ expressao:
 
 				    }
 
-       /* | expressao '%' expressao   {
-                                        sprintf(command,"\tmod(%s, %s, &tp[%d]);\n", $1->tval, $3->tval, tp_count++);
-                                        $$ = mnemonico($1, $3, strdup(command));
-                                    }*/
-
         | '-' expressao %prec UMINUS {
-                                        sprintf(command,"\tuminus(%s, NULL, &tp[%d]);\n", $2->tval, tp_count++);
-                                        $$ = mnemonico($2, NULL, strdup(command));
+                                        //sprintf(command,"\tuminus(%s, NULL, &tp[%d]);\n", $2->tval, tp_count++);
+                                        //$$ = mnemonico($2, NULL, strdup(command));
                                      }
 
         | '(' expressao ')'         { $$ = $2; }
@@ -346,7 +307,6 @@ sentenca:
 				"\tSYS\n",
 				$3->tval); 
                             enqueue(queue_geral,strdup(command));
-			    printf("passou aqui\n");
                           }
 
 	| LEIA '(' ATOMO ')' ';' {
@@ -361,116 +321,6 @@ sentenca:
                             enqueue(queue_geral,strdup(command));
                           }
         ;
-
-lista_parametros:
-                /* Lista vazia. Funcao sem parametros. */
-                | '&'ATOMO {
-                            if (!$2->load) {
-                                load($2);
-                            }
-                            sprintf(command, "\tparam(NULL, NULL, &%s);\n", $2->tval);
-                            enqueue(queue_geral, strdup(command));
-                            numParam++;
-
-                           }
-                | expressao {
-                            //if (!$1->load) {
-                            //    load($1);
-                            //}
-                            sprintf(command, "\tparam(&%s, NULL, NULL);\n", $1->tval);
-                            enqueue(queue_geral, strdup(command));
-                            numParam++;
-                        }
-                | '&'ATOMO ',' lista_parametros {
-                                                    if (!$2->load) {
-                                                        load($2);
-                                                    }
-                                                    sprintf(command, "\tparam(NULL, NULL, &%s);\n", $2->tval);
-                                                    enqueue(queue_geral, strdup(command));
-                                                    numParam++;
-                                                }
-                | expressao ',' lista_parametros {
-                                                //if (!$1->load) {
-                                                //    load($1);
-                                                //}
-                                                sprintf(command, "\tparam(&%s, NULL, NULL);\n", $1->tval);
-                                                enqueue(queue_geral, strdup(command));
-                                                numParam++;
-                                             }
-                ;
-
-/*funcao:
-      FUNCAO lista_parametros ')' {
-                                    sprintf(command, "\tcall(\"%s\", 1, NULL);\n", $1->idNome);
-                                    enqueue(queue_geral, strdup(command));
-                                    $1->numParam = numParam;
-                                    numParam = 0;
-                                  }
-      ;
-*/
-label_para_inicio: {
-                        sprintf(command, " l%d:\n", (*l)++);
-                        enqueue(queue_geral, strdup(command));
-                   }
-                   ;
-
-posicionar_segunda_atribuicao:
-                    {
-                        char *value;
-                        Stack *stack_tmp = init_stack();
-                        int *label = (int *) pop(stack_para_label);
-
-                        value = (char *) pop(stack_para_atribuicao);
-                        while (strcmp(value, "fim") && !is_stack_empty(stack_para_atribuicao)) {
-                            push(stack_tmp, (void *) value);
-                            value = (char *) pop(stack_para_atribuicao);
-                        }
-
-                        while (!is_stack_empty(stack_tmp)) {
-                            value = (char *) pop(stack_tmp);
-                            enqueue(queue_geral, value);
-                        }
-
-                        sprintf(command, "\tjump(NULL, NULL, l%d);\n", *label-1);
-                        enqueue(queue_geral, strdup(command));
-                        sprintf(command, " l%d:\n", *label);
-                        enqueue(queue_geral, strdup(command));
-                    }
-                    ;
-
-retirar_segunda_atribuicao:
-                     {
-                        char *value; 
-                        enqueue(queue_geral, "fim_atribuicao_para");
-
-                        while (!is_queue_empty(queue_geral)) {
-                            value = dequeue(queue_geral);
-                            if (!strcmp(value, "inicio_atribuicao_para"))
-                                break;
-                            enqueue(queue_geral, value);
-                        }
-                        push(stack_para_atribuicao, (void *) "fim");
-                        while (!is_queue_empty(queue_geral)) {
-                            value = dequeue(queue_geral);
-                            if (!strcmp(value, "fim_atribuicao_para"))
-                                break;
-                            push(stack_para_atribuicao, (void *) value);
-                        }
-                     }
-                     ;
-
-marcar_inicio_atribuicao:
-                        {
-                            push(stack_para_label, (void *) copy_int(l));
-                            sprintf(command,"\tjump_f(tp[%d], NULL, l%d);\n", tp_count-1, (*l)++);
-                            enqueue(queue_geral,strdup(command));
-                            enqueue(queue_geral, "inicio_atribuicao_para"); 
-                        }
-                        ;
-
-para:
-    PARA '(' atribuicao ';' label_para_inicio expressao_logica ';' marcar_inicio_atribuicao atribuicao retirar_segunda_atribuicao ')' instrucao posicionar_segunda_atribuicao
-    ;
 
 label_enquanto_inicio: {
                             sprintf(command, "l%d:\n", (*l)++);
@@ -488,7 +338,6 @@ label_enquanto_fim: {
                     ;
 inicio_enquanto: {
                     push(stack_enquanto,(void *) copy_int(l));
-                    //sprintf(command,"l%d\n", (*l)++);
 		    sprintf(command,
 			"\tCMP (%d), 1\n"
 			"\tJNE l%d\n",
@@ -507,7 +356,6 @@ inicio_selecao: {
 			"\tCMP (%d), 1\n"
 			"\tJNE l%d\n",
 			cond_mem - 2, *l);
-		//printf("\n\nFILA: %s\n\n", command);
 		(*l)++;
                 enqueue(queue_geral,strdup(command));
                 count_if_else++;
@@ -517,15 +365,16 @@ inicio_selecao: {
 label_selecao: {
                     int *label = (int *) pop(stack_if);
                     sprintf(command, "l%d:\n", *label);
-		    //printf("\n\nFILA: %s\n\n", command);
                     enqueue(queue_geral,strdup(command));
                     free(label);
                }
                ;
+
 bloco_selecao: {
                     enqueue(queue_geral,"jump_incondicional");
                }
                ;
+
 selecao: 
 	IF '(' expressao_logica ')' inicio_selecao THEN instrucao label_selecao
         | IF '(' expressao_logica ')' inicio_selecao THEN instrucao ELSE bloco_selecao label_selecao instrucao
@@ -533,12 +382,10 @@ selecao:
 
 expressao_logica:
                 expressao_relacional {
-                                        //sprintf(command, "tp[%d]", tp_count-1);
                                         $$ = $1; 
                                      }
 
                 | expressao_relacional AND expressao_logica {
-								//printf("logico: %s %s\n", $1->mval, $3->mval);
                                                                 sprintf(command,
 									"\tMOV AX, %s\n"
 									"\tAND AX, %s\n"
@@ -554,6 +401,7 @@ expressao_logica:
 								cond_mem += 2;
                                                                 $$ = mnemonico($1, $3, strdup(command));
                                                             }
+
                 | expressao_logica AND expressao_relacional { 
 								sprintf(command,
 									"\tMOV AX, %s\n"
@@ -570,6 +418,7 @@ expressao_logica:
 								cond_mem += 2;
                                                                 $$ = mnemonico($1, $3, strdup(command));
                                                             }
+
                 | expressao_logica OR expressao_relacional {
 								sprintf(command,
 									"\tMOV AX, %s\n"
@@ -586,6 +435,7 @@ expressao_logica:
 								cond_mem += 2;
                                                                 $$ = mnemonico($1, $3, strdup(command));
                                                            }
+
                 | expressao_relacional OR expressao_logica {
 								sprintf(command,
 									"\tMOV AX, %s\n"
@@ -602,6 +452,7 @@ expressao_logica:
 								cond_mem += 2;
                                                                 $$ = mnemonico($1, $3, strdup(command));
                                                            }
+
                 | NOT expressao_logica {
 								sprintf(command,
 									"\tMOV AX, %s\n"
@@ -658,11 +509,9 @@ instrucao:
                     }
                 }
         | enquanto { desempilhar(queue_geral); }
-        | para { desempilhar(queue_geral); }
         | aborte { if (count_if_else == 0) desempilhar(queue_geral); }
         | saia { if (count_if_else == 0) desempilhar(queue_geral); }
         | expressao_logica
-        //| funcao ';' { if (count_if_else == 0) desempilhar(queue_geral); }
         | sentenca { if (count_if_else == 0) desempilhar(queue_geral); }
         | declaracao ';' { if (count_if_else == 0) desempilhar(queue_geral); }
 	| atribuicao ';' { if (count_if_else == 0) desempilhar(queue_geral); } 
@@ -676,29 +525,31 @@ instrucao:
                 }
         }
 	;
+
 conjunto_instrucao:
 	instrucao
 	| conjunto_instrucao instrucao
 	;
 
-imprime_data_bss: {
-		    
-            	    fprintf(file,
-			"\tPUSH 0\n"
-			"\tPUSH _EXIT\n"
-			"\tSYS\n\n");
-		    if (chamou_leia) {
-		    	imprima_procedimento_read();
-		    }
+imprime_data_bss:
+{
+    fprintf(file,
+        "\tPUSH 0\n"
+	"\tPUSH _EXIT\n"
+	"\tSYS\n\n");
+    if (chamou_leia) {
+	gera_procedimento_read();
+    }
 
-		    fprintf(file, ".SECT .DATA\n");
-		    desempilhar(queue_data);
+    fprintf(file, ".SECT .DATA\n");
+    desempilhar(queue_data);
 
-            	    fprintf(file,
-			"\n.SECT .BSS\n"
-			"EOF = '\\n'\n");
-		    desempilhar(queue_bss);
-	          }
+    fprintf(file,
+	"\n.SECT .BSS\n"
+	"EOF = '\\n'\n");
+    desempilhar(queue_bss);
+}
+	;
 
 bloco_instrucao:
 	INICIO ';' imprimir_label FIM ';' imprime_data_bss {
@@ -713,28 +564,13 @@ imprimir_label: {
 %%
 
 void load(tabelaSimb *s) {
-	if (s->tipoD == tipoConStr) {
-	    //printf("%s %s\n", $1->tval, $1->sval);
-            sprintf(command,
-		"%s: .ASCIZ \"%s\\n\"\n",
-		s->tval, s->sval);
-		enqueue(queue_data, strdup(command));
-	}
-    /*switch (s->tipoD) {
-        case tipoConInt:
-            sprintf(command, "\tloadi(%d, NULL, &%s);\n", s->ival, s->tval);
-            break;
-        case tipoConFloat:
-            sprintf(command, "\tloadf(%.2f, NULL, &%s);\n", s->fval, s->tval);
-            break;
-        case tipoConStr:
-            sprintf(command, "\tloads(\"%s\", NULL, &%s);\n", s->sval, s->tval);
-            break;
-        default:
-            return;
-    }*/
+    if (s->tipoD == tipoConStr) {
+        sprintf(command,
+            "%s: .ASCIZ \"%s\\n\"\n",
+	    s->tval, s->sval);
+        enqueue(queue_data, strdup(command));
+    }
     s->load = 1;
-    //enqueue(queue_geral, strdup(command));
 }
 
 tabelaSimb *mnemonico(tabelaSimb *s1, tabelaSimb *s2, char cmd[10000]) {
@@ -753,7 +589,6 @@ tabelaSimb *mnemonico(tabelaSimb *s1, tabelaSimb *s2, char cmd[10000]) {
 
     sprintf(command, "DX");
     s->tval = strdup(command);
-    //printf("(%d)\n", cond_mem -2);
     sprintf(command, "(%d)", cond_mem - 2);
     s->mval = strdup(command);
     s->load = 1;
@@ -837,26 +672,6 @@ tipoDado defineTipo(tabelaSimb *s1, tabelaSimb *s2) {
 
     }
 
-/*    if ((s1->tipoD == tipoConFloat || s1->tipoD == tipoIdFloat) &&
-        (s2->tipoD != tipoConStr && s2->tipoD != tipoIdStr)) {
-        tipo = tipoConFloat;
-    }
-    else if ((s2->tipoD == tipoConFloat || s2->tipoD == tipoIdFloat) &&
-        (s1->tipoD != tipoConStr && s1->tipoD != tipoIdStr)) {
-        tipo = tipoConFloat;
-    }
-    else if ((s2->tipoD == tipoConInt || s2->tipoD == tipoIdInt) &&
-        (s1->tipoD == tipoConInt || s1->tipoD == tipoIdInt)) {
-        tipo = tipoConInt;
-    }
-    else if ((s1->tipoD == tipoIdStr || s1->tipoD == tipoConStr) && 
-        (s2->tipoD == tipoIdStr || s2->tipoD == tipoConStr)) {
-        tipo = tipoConStr; 
-    }
-    else {
-        yyerror("Tipos incompativeis");
-    }*/
-
     return tipo;
 }
 
@@ -892,7 +707,7 @@ void verificaUso(tabelaSimb *s) {
         yyerror(error);
 }
 
-void imprima_procedimento_read() {
+void gera_procedimento_read() {
 	fprintf(file,
 		"readstring:\n"
 		"\tPOP AX\n"
@@ -926,94 +741,6 @@ void geraSaidaTemplate(FILE *file) {
 		".SECT .TEXT\n"
 		"main:\n"
                 );
-}
-
-void criar_filltf() {
-    fprintf(file, "\nvoid filltf()\n{\n");
-                
-    tabelaSimb *sp = NULL;
-
-    for (sp = tabSimb; sp < &tabSimb[MAX_SIMB]; sp++) { 
-        /* Existe? */
-        if (sp->uso) {
-            switch (sp->tipoD) {
-                case tipoIdFuncInt:
-                    break;
-                case tipoIdFuncFloat:
-                    break;
-                case tipoIdFuncDouble:
-                    if (!strcmp(sp->idNome, "leia")) {
-                        fprintf(file, "\ttf[%d].tipoRet = tipoRetFuncDouble;\n"
-                                      "\ttf[%d].vfunc = (void *) scanf;\n"
-                                      "\ttf[%d].idNome = malloc(5);\n"
-                                      "\tstrcpy(tf[%d].idNome, \"leia\");\n",
-                                      sp->idx, sp->idx, sp->idx, sp->idx
-                        );
-                    }
-                    else if (!strcmp(sp->idNome, "raiz")) {
-                        fprintf(file, "\ttf[%d].tipoRet = tipoRetFuncDouble;\n"
-                                      "\ttf[%d].dfunc = (void *) sqrt;\n"
-                                      "\ttf[%d].idNome = malloc(5);\n"
-                                      "\tstrcpy(tf[%d].idNome, \"raiz\");\n",
-                                      sp->idx, sp->idx, sp->idx, sp->idx
-                        );
-                    }
-                    else if (!strcmp(sp->idNome, "exp")) {
-                        fprintf(file, "\ttf[%d].tipoRet = tipoRetFuncDouble;\n"
-                                      "\ttf[%d].dfunc = (void *) exp;\n"
-                                      "\ttf[%d].idNome = malloc(4);\n"
-                                      "\tstrcpy(tf[%d].idNome, \"exp\");\n",
-                                      sp->idx, sp->idx, sp->idx, sp->idx
-                        );
-                    }
-                    else if (!strcmp(sp->idNome, "log")) {
-                        fprintf(file, "\ttf[%d].tipoRet = tipoRetFuncDouble;\n"
-                                      "\ttf[%d].dfunc = (void *) log;\n"
-                                      "\ttf[%d].idNome = malloc(4);\n"
-                                      "\tstrcpy(tf[%d].idNome, \"log\");\n",
-                                      sp->idx, sp->idx, sp->idx, sp->idx
-                        );
-                    }
-                    else if (!strcmp(sp->idNome, "pow")) {
-                        fprintf(file, "\ttf[%d].tipoRet = tipoRetFuncDouble;\n"
-                                      "\ttf[%d].dfunc = (void *) pow;\n"
-                                      "\ttf[%d].idNome = malloc(4);\n"
-                                      "\tstrcpy(tf[%d].idNome, \"pow\");\n",
-                                      sp->idx, sp->idx, sp->idx, sp->idx
-                        );
-                    }
-                    break;
-                case tipoIdFuncChar:
-                    break;
-                case tipoIdFuncStr:
-                    break;
-                case tipoIdFuncVoid: 
-                    if (!strcmp(sp->idNome, "imprima")) {
-                        fprintf(file, "\ttf[%d].tipoRet = tipoRetFuncVoid;\n"
-                                      "\ttf[%d].vfunc = (void *) printf;\n"
-                                      "\ttf[%d].idNome = malloc(8);\n"
-                                      "\tstrcpy(tf[%d].idNome, \"imprima\");\n",
-                                      sp->idx, sp->idx, sp->idx, sp->idx
-                        );
-                    }
-                    
-                    else if (!strcmp(sp->idNome, "saia")) {
-                        fprintf(file, "\ttf[%d].tipoRet = tipoRetFuncVoid;\n"
-                                      "\ttf[%d].vfunc = (void *) exit;\n"
-                                      "\ttf[%d].idNome = malloc(5);\n"
-                                      "\tstrcpy(tf[%d].idNome, \"saia\");\n",
-                                      sp->idx, sp->idx, sp->idx, sp->idx
-                        );
-                    }
-                    break;
-                default:
-                    /* Nao eh uma funcao */
-                    break;
-            }
-        }
-    }
-
-//    fprintf(file, "}\n");
 }
 
 int main(int argc, char **argv) {
@@ -1050,8 +777,6 @@ int main(int argc, char **argv) {
     yyparse();
     if (argc > 1) fclose(yyin);    
 
-    //fprintf(file,"\tPUSH 0\n\tPUSH _EXIT\n\tSYS\n\n");
-    //criar_filltf();
     fclose(file);
     geraSaidaH();
 }

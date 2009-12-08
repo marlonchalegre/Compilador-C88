@@ -34,7 +34,6 @@ float ([0-9]*\.[0-9]+)([eE][-+]?[0-9]+)?
 "inicio"    { return INICIO; }
 "fim"       { return FIM; }
 "int"       { return INT; }
-"real"      { return FLOAT; }
 "texto"     { return TEXTO; }
 "entao"     { return THEN; }
 "senao"     { return ELSE; }
@@ -45,7 +44,6 @@ float ([0-9]*\.[0-9]+)([eE][-+]?[0-9]+)?
 
 
 {variavel} { 
-		printf("entrou variavel: %s\n", yytext);
                 yylval.tb = achaId(yytext);
                 return ATOMO;
            }
@@ -55,12 +53,6 @@ float ([0-9]*\.[0-9]+)([eE][-+]?[0-9]+)?
                 yylval.tb = achaInt(val);
                 return ATOMO;
            } 
-
-{float} {
-                    float val = atof(yytext);
-                    yylval.tb = achaFloat(val);
-                    return ATOMO;
-               }
 
 {variavel}[ \t]*\(  {
                         char *val = strdup(yytext); 
@@ -89,19 +81,14 @@ float ([0-9]*\.[0-9]+)([eE][-+]?[0-9]+)?
                             return ABORTE;
                         }
 			else if (!strcmp(val, "imprima")) {
-			    printf("achou imprima\n");
 			    return IMPRIMA;
 			}
 			else if (!strcmp(val, "read")) {
-			    printf("achou read\n");
 			    return LEIA;
 			}
-                        yylval.tb = achaFuncs(val);
-                        return FUNCAO;
                     }
 
 \"[^"\n]*["\n] {
-		    printf("achou string\n");
                     char *val = strdup(yytext+1);
                     if (val[yyleng-2] != '"')
                         yyerror("String terminada incorretamente.");
