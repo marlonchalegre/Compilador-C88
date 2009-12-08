@@ -1,7 +1,21 @@
+/*
+    Arquivo original escrito por:
+      Autor: Ruben Carlo Benante
+      Email: benante@gmail.com
+      Data: 23/04/2009
+      Modificado: 25/05/2009
+
+    C88 versao 1 - tabela.h
+    Autores: Elton Oliveira, Marlon Chalegre
+             Rodrigo Castro, Romulo Jales
+    Emails: {elton.oliver, marlonchalegre
+             rodrigomsc, romulojales}@gmail.com
+*/
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "Tabela.h"
+#include "tabela.h"
 
 char buffer[100];
 int idxId = 30;

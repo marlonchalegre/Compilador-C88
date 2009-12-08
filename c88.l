@@ -10,7 +10,7 @@ int [0-9]
                  rodrigomsc, romulojales}@gmail.com
     */
  
-    #include "Tabela.h"
+    #include "tabela.h"
     #include "y.tab.h"
     #include <stdlib.h>
     #include <string.h>

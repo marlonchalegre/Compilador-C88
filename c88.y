@@ -11,9 +11,9 @@
     #include <math.h>
     #include <string.h>
     #include <stdlib.h>
-    #include "Tabela.h"
-    #include "Fila.h"
-    #include "Stack.h"
+    #include "tabela.h"
+    #include "fila.h"
+    #include "stack.h"
 
     FILE *file;
     void yyerror(char *);
@@ -598,20 +598,12 @@ tabelaSimb *alloc_tabelaSimb() {
 void validaTipoAtribuicao(tabelaSimb *s1, tabelaSimb *s2) {
     switch (s1->tipoD) {
         case tipoIdInt:
-            if (s2->tipoD != tipoIdInt && s2->tipoD != tipoConInt &&
-                s2->tipoD != tipoIdFuncInt) {
-                yyerror("Atribuicao invalida.");
-            }
-            break;
-        case tipoIdFloat:
-            if (s2->tipoD != tipoIdFloat && s2->tipoD != tipoConFloat &&
-                s2->tipoD != tipoIdFuncFloat && s2->tipoD != tipoIdFuncDouble) {
+            if (s2->tipoD != tipoIdInt && s2->tipoD != tipoConInt) {
                 yyerror("Atribuicao invalida.");
             }
             break;
         case tipoIdStr:
-            if (s2->tipoD != tipoIdStr && s2->tipoD != tipoConStr &&
-                s2->tipoD != tipoIdFuncStr) {
+            if (s2->tipoD != tipoIdStr && s2->tipoD != tipoConStr) {
                 yyerror("Atribuicao invalida.");
             }
             break;
@@ -629,34 +621,17 @@ tipoDado defineTipo(tabelaSimb *s1, tabelaSimb *s2) {
     tipoDado tipo;
 
     switch (s1->tipoD) {
-        case tipoConFloat:
-        case tipoIdFloat:
-        case tipoIdFuncFloat:
-        case tipoIdFuncDouble:
-            if (s2->tipoD != tipoConStr && s2->tipoD != tipoIdStr &&
-                s2->tipoD != tipoIdFuncStr) {
-                tipo = tipoConFloat;
-            }
-            break;
         case tipoConInt:
         case tipoIdInt:
-        case tipoIdFuncInt:
-            if (s2->tipoD == tipoConStr || s2->tipoD == tipoIdStr || 
-                s2->tipoD == tipoIdFuncStr) {
+            if (s2->tipoD == tipoConStr || s2->tipoD == tipoIdStr) {
                 yyerror("Tipos incompativeis");
-            }
-            else if (s2->tipoD == tipoConFloat || s2->tipoD == tipoIdFloat ||
-                     s2->tipoD == tipoIdFuncDouble || s2->tipoD == tipoIdFuncFloat) {
-                tipo = tipoConFloat;
             }
             else
                 tipo = tipoConInt;
             break;
         case tipoConStr:
         case tipoIdStr:
-        case tipoIdFuncStr:
-            if (s2->tipoD == tipoIdStr || s2->tipoD == tipoConStr ||
-                s2->tipoD == tipoIdFuncStr) {
+            if (s2->tipoD == tipoIdStr || s2->tipoD == tipoConStr) {
                 tipo = tipoConStr;
             }
             else
