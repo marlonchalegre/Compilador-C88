@@ -1,0 +1,40 @@
+begin;
+int A;
+int b;
+int variavel_inteira_longa;
+
+A = 1;
+b = 3;
+variavel_inteira_longa = 4;
+
+string t;
+t = "entrou no if";
+string h;
+h = "entrou no else";
+
+if (A==1 or (b!=2 and variavel_inteira_longa>=3)) then  
+  print(t);
+else
+  print(h);  
+
+//read(h);
+
+b = 1;
+
+while (b < 5)
+  begin;
+    print(h);
+    print("");
+    b++;
+  end;
+
+;;;
+
+b++;
+
+if (not (++b != 7)) then
+  abort;
+
+print("abort falhou");
+
+end;
