@@ -1,13 +1,12 @@
-inicio;
+begin;
 int a;
 int b;
 b = 1;
 a = 1;
-enquanto ( a < 10 )
-  inicio;
+while(a < 10)
+  begin;
     b = b + 1;
     a = a + 1;
-  fim;
+  end;
 2 + 2;
-fim;
-
+end;

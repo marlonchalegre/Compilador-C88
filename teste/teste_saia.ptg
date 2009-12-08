@@ -1,9 +1,9 @@
-inicio;
+begin;
 int a;
 a = 1;
 ;;;
-se (a == 2) entao
-  aborte;
-senao
+if (a == 2) then 
+  abort;
+else
   a = 2;
-fim;
+end;

@@ -1,17 +1,16 @@
 variavel [a-zA-Z]([a-zA-Z0-9]|_)*
 int [0-9]
-float ([0-9]*\.[0-9]+)([eE][-+]?[0-9]+)?
 
 %{
      /*
-        Portugol versao 3 - lex
-        Autores: Ed Prado, Edinaldo Carvalho, Elton Oliveira
-                 Marlon Chalegre, Rodrigo Castro
-        Emails: {msgprado, truetypecode, elton.oliver,
-                 marlonchalegre, rodrigomsc}@gmail.com
+        C88 versao 1 - lex
+        Autores: Elton Oliveira, Marlon Chalegre
+                 Rodrigo Castro, Romulo Jales
+        Emails: {elton.oliver, marlonchalegre
+                 rodrigomsc, romulojales}@gmail.com
     */
  
-    #include "quadruplas.h"
+    #include "Tabela.h"
     #include "y.tab.h"
     #include <stdlib.h>
     #include <string.h>
@@ -31,16 +30,16 @@ float ([0-9]*\.[0-9]+)([eE][-+]?[0-9]+)?
 
 ((\/\/[^\n]*\n)|\n) { yylineno++; } 
 
-"inicio"    { return INICIO; }
-"fim"       { return FIM; }
+"begin"    { return INICIO; }
+"end"       { return FIM; }
 "int"       { return INT; }
-"texto"     { return TEXTO; }
-"entao"     { return THEN; }
-"senao"     { return ELSE; }
-"e"         { return AND; }
-"ou"        { return OR; }
-"nao"       { return NOT; }
-"aborte"    { return ABORTE; }
+"string"     { return TEXTO; }
+"then"     { return THEN; }
+"else"     { return ELSE; }
+"and"         { return AND; }
+"or"        { return OR; }
+"not"       { return NOT; }
+"abort"    { return ABORTE; }
 ;           { return *yytext;}
 
 
@@ -60,22 +59,22 @@ float ([0-9]*\.[0-9]+)([eE][-+]?[0-9]+)?
                         val[yyleng-1] = '\0';
                         trim(val); /* Elimina espacos e tabulacoes extras */
                         yyless(yyleng-1);
-                        if (!strcmp(val, "ou")) {
+                        if (!strcmp(val, "or")) {
                             return OR;
                         }
-                        else if (!strcmp(val, "e")) {
+                        else if (!strcmp(val, "and")) {
                             return AND;
                         }
-                        else if (!strcmp(val, "nao")) {
+                        else if (!strcmp(val, "not")) {
                             return NOT;
                         }
-                        else if (!strcmp(val, "enquanto")) {
+                        else if (!strcmp(val, "while")) {
                             return ENQUANTO;
                         }
-                        else if (!strcmp(val, "se")) {
+                        else if (!strcmp(val, "if")) {
                             return IF;
                         }
-			else if (!strcmp(val, "imprima")) {
+			else if (!strcmp(val, "print")) {
 			    return IMPRIMA;
 			}
 			else if (!strcmp(val, "read")) {

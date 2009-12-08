@@ -1,9 +1,9 @@
-inicio;
+begin;
 int a;
 a = 3;
 int b;
 b = 4;
-se (a == 3 e b > 2) entao
+if (a == 3 and b > 2) then 
   3 + 3;
 4 + 4;
-fim;
+end;

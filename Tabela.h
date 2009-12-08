@@ -139,27 +139,7 @@ void iniciarTabelaSimb();
 
 //extern FILE *yyin, *yyout;
 //extern FILE *fhead;
-char *geraLB(int *i);
-char *geraTP(int *i);
-int geraTF(void); //tabela de funcoes
-int geraTC(void); //tabela de constantes
-int geraTS(void); //tabela de variaveis
 char *nomeTipo(nodo *p); //retorna o nome do tipoDado ou tipoBase
 
-void geraSaidaH();
-
-void addFuncDouble(char *id, double (*func)(), char *idF);
-void addFuncVoid(char *id, void (*func)(), char *idF);
-void addConStr(char *s);
 void yyerror(char *s);
 extern int lineno;
-
-void printNodo(nodo *tn, int n, char *var);
-void printTS(void);
-int pegaTipoBase(nodo *p);
-void erroSemantico(char *s, int linha);
-
-nodo *opr(int oper, int nops, ...);
-nodo *conv(tabelaSimb *ps);
-void liberaNodo(nodo *tn);
-char *token(int tk);

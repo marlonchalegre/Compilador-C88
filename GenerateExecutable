@@ -1,0 +1,5 @@
+#/bin/sh
+flex c88.l
+bison -y -v -d c88.y
+gcc -c -lm Fila.c Stack.c tabela.c y.tab.c lex.yy.c
+gcc -lm Fila.o Stack.o tabela.o y.tab.o lex.yy.o -o c88 

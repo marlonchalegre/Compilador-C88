@@ -1,4 +1,12 @@
 %{
+    /*
+        C88 versao 1 - yacc 
+        Autores: Elton Oliveira, Marlon Chalegre
+                 Rodrigo Castro, Romulo Jales
+        Emails: {elton.oliver, marlonchalegre
+                 rodrigomsc, romulojales}@gmail.com
+    */
+
     #include <stdio.h>
     #include <math.h>
     #include <string.h>
@@ -25,13 +33,10 @@
     int cond_mem = 500;
     int *l;
     int count_if_else = 0;
-    int count_para = 0;
     int chamou_leia = 0;
     char msg[80];
     Stack *stack_if;
     Stack *stack_enquanto;
-    Stack *stack_para_label;
-    Stack *stack_para_atribuicao;
     Queue *queue_geral;
     Queue *queue_data;
     Queue *queue_bss;
@@ -47,7 +52,7 @@
 %token <tipo> TIPO
 %token INT TEXTO 
 %token IF
-%token ENQUANTO PARA
+%token ENQUANTO
 %token IMPRIMA ABORTE LEIA 
 %token MAIORIGUAL IGUAL MENORIGUAL DIFERENTE
 %right '='
@@ -64,7 +69,7 @@
 %%
 
 programa:
-        bloco_instrucao
+        bloco_instrucao imprime_data_bss
         ;
 
 declaracao:
@@ -542,9 +547,9 @@ imprime_data_bss:
 	;
 
 bloco_instrucao:
-	INICIO ';' imprimir_label FIM ';' imprime_data_bss {
+	INICIO ';' imprimir_label FIM ';' {
                            }
-	| INICIO ';' imprimir_label conjunto_instrucao FIM ';' imprime_data_bss {
+	| INICIO ';' imprimir_label conjunto_instrucao FIM ';'  {
                                                 }
 	;
 imprimir_label: {
@@ -719,12 +724,12 @@ void gera_procedimento_read() {
 
 void geraSaidaTemplate(FILE *file) {
     fprintf(file,
-                "!\tGerado pelo compilador PORTUGOL versao 0.1\n"
-                "!\tAutores: Ed Prado, Edinaldo Carvalho, Elton Oliveira,\n"
-                "!\t\t Marlon Chalegre, Rodrigo Castro\n"
-                "!\tEmail: {msgprado, truetypecode, elton.oliver,\n"
-                "!\t\tmarlonchalegre, rodrigomsc}@gmail.com\n"
-                "!\tData: 26/05/2009\n\n"
+                "!\tGerado pelo compilador C88 versao 0.1\n"
+                "!\tAutores: Elton Oliveira, Marlon Chalegre\n"
+                "!\t\t Rodrigo Castro, Romulo Jales\n"
+                "!\tEmail: {elton.oliver, marlonchalegre,\n"
+                "!\t\trodrigomsc, romulojales}@gmail.com\n"
+                "!\tData: 09/12/2009\n\n"
 		"_EXIT = 1\n"
 		"_PRINTF = 127\n"
 		"_GETCHAR = 117\n\n"
@@ -742,8 +747,6 @@ int main(int argc, char **argv) {
 
     stack_if = init_stack();
     stack_enquanto = init_stack();
-    stack_para_label = init_stack();
-    stack_para_atribuicao = init_stack();
     queue_geral = init_queue();
     queue_data = init_queue();
     queue_bss = init_queue();
@@ -768,5 +771,4 @@ int main(int argc, char **argv) {
     if (argc > 1) fclose(yyin);    
 
     fclose(file);
-    geraSaidaH();
 }

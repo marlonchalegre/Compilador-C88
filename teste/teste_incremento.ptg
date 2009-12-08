@@ -1,7 +1,7 @@
-inicio;
+begin;
 int a;
 a = 0;
 int b;
 b = a++ + 4;
 a + 1;
-fim;
+end;

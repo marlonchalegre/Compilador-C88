@@ -1,5 +1,5 @@
-inicio;
-texto a;
+begin;
+string a;
 read(a);
-imprima(a);
-fim;
+print(a);
+end;

@@ -1,7 +1,7 @@
-inicio;
-se (4 == 4) entao 
+begin;
+if (4 == 4) then 
   2 + 2;
-senao
+else
   4 + 4;
 3 + 3;
-fim;
+end;
