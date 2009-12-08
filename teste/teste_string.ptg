@@ -1,0 +1,5 @@
+inicio;
+texto a;
+read(a);
+imprima(a);
+fim;

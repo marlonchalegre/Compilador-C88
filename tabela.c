@@ -5,6 +5,7 @@
 
 char buffer[100];
 int idxId = 30;
+int strxId = 1;
 int idxFunc = 0;
 int idxCon = 30;
 
@@ -138,14 +139,16 @@ tabelaSimb* achaStr(char *valor){
                     sp->tipoD == tipoConStr)
 	            return sp;
                 /* ta livre? */
-	        if (!sp->uso) { 
+	        if (!sp->uso) {
                     sp->uso = 1;
                     sp->load = 0;
                     sp->tipoD = tipoConStr;
                     sp->sval = strdup(valor);
                     sp->idx = idxCon++;
-                    sprintf(buffer, "tc[%d]", sp->idx);
+                    sprintf(buffer, "str%d", strxId++);
                     sp->tval = strdup(buffer);
+                    sprintf(buffer, "str%d", strxId-1);
+                    sp->mval = strdup(buffer);
 		    return sp;
 	        }
 	}

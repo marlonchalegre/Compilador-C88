@@ -11,11 +11,12 @@
     void yyerror(char *);
     int yylex(void);
     int *copy_int(int *value);
-    void desempilhar(void);
+    void desempilhar(Queue* queue);
     void validaTipoAtribuicao(tabelaSimb *s1, tabelaSimb *s2);
     tipoDado defineTipo(tabelaSimb *s1, tabelaSimb *s2);
     tabelaSimb *alloc_tabelaSimb();
     tabelaSimb *mnemonico(tabelaSimb *s1, tabelaSimb *s2, char buffer[]);
+    void imprima_procedimento_read();
     void geraSaidaTemplate(FILE *file);
     void load(tabelaSimb *s);
     void verificaUso(tabelaSimb *s);
@@ -27,13 +28,16 @@
     int count_if_else = 0;
     int count_para = 0;
     int numParam = 0;
+    int chamou_leia = 0;
     char msg[80];
     Stack *stack_if;
     Stack *stack_enquanto;
     Stack *stack_para_label;
     Stack *stack_para_atribuicao;
     Queue *queue_geral;
-    char command[500];
+    Queue *queue_data;
+    Queue *queue_bss;
+    char command[10000];
 %}
 
 %union {
@@ -48,7 +52,7 @@
 %token SQRT INT FLOAT TEXTO 
 %token IF
 %token ENQUANTO PARA
-%token IMPRIMA ABORTE SAIA
+%token IMPRIMA ABORTE SAIA LEIA 
 %token MAIORIGUAL IGUAL MENORIGUAL DIFERENTE
 %right '='
 %left '<' '>' MENORIGUAL MAIORIGUAL IGUAL DIFERENTE
@@ -75,13 +79,17 @@ declaracao:
                                 sprintf(command, "\tMOV (%d), 0\n", $2->idx);
                                 enqueue(queue_geral, strdup(command));
                           }
-        /*| TEXTO ATOMO {
+        | TEXTO ATOMO {
                                 verificaUso($2); 
                                 $2->tipoD = tipoIdStr; 
                                 $2->load = 1;
-                                sprintf(command, "\tloads(\"\", NULL, &%s);\n", $2->tval);
-                                enqueue(queue_geral, strdup(command));
-                            }*/
+				sprintf(command, "strd%d", $2->idx);
+			    	$2->tval = strdup(command);
+			    	sprintf(command,
+					"%s: .SPACE 80\n",
+					$2->tval);
+                                enqueue(queue_bss, strdup(command));
+                            }
 
         ;
 
@@ -212,6 +220,7 @@ expressao_relacional:
 
 expressao:
         ATOMO                       { 
+					
                                         tabelaSimb *s = alloc_tabelaSimb();
                                         s->tval = strdup($1->tval);
                                         s->mval = strdup($1->mval);
@@ -323,22 +332,36 @@ expressao:
         | '(' expressao ')'         { $$ = $2; }
         ;
 
-/*sentenca:
-        IMPRIMA ATOMO ')' ';' {
-                            sprintf(command, "\tparam(%s, NULL, NULL);\n", $2->tval); 
+sentenca:
+        IMPRIMA '(' ATOMO ')' ';' {
+			    if ($3->tipoD != tipoConStr && $3->tipoD != tipoIdStr) {
+			        yyerror("O comando imprima aceita apenas constantes e variaveis de texto.");
+			    }
+			    if (!$3->load) {
+				load($3);
+			    }
+                            sprintf(command,
+				"\tPUSH %s\n"
+				"\tPUSH _PRINTF\n"
+				"\tSYS\n",
+				$3->tval); 
                             enqueue(queue_geral,strdup(command));
-                            sprintf(command, "\tcall(\"imprima\", 1, NULL);\n");
+			    printf("passou aqui\n");
+                          }
+
+	| LEIA '(' ATOMO ')' ';' {
+			    if ($3->tipoD != tipoIdStr) {
+			        yyerror("O comando imprima aceita apenas variaveis de texto.");
+			    }
+			    chamou_leia = 1;
+			    sprintf(command,
+			   	"\tPUSH %s\n"
+				"\tCALL readstring\n",
+				$3->tval);
                             enqueue(queue_geral,strdup(command));
                           }
-        | IMPRIMA IDENTIFICADOR ';' {
-
-                                        sprintf(command, "\tparam(%s, NULL, NULL);\n", $2->tval); 
-                                        enqueue(queue_geral,strdup(command));
-                                        sprintf(command, "\tcall(\"imprima\", 1, NULL);\n");
-                                        enqueue(queue_geral,strdup(command));
-                                    }
         ;
-*/
+
 lista_parametros:
                 /* Lista vazia. Funcao sem parametros. */
                 | '&'ATOMO {
@@ -627,23 +650,23 @@ saia:
 
 instrucao:
 	selecao { 
-                    desempilhar();
+                    desempilhar(queue_geral);
                     count_if_else--;
                     if (!count_if_else) { // label de jump incondicional
                         fprintf(file, "l%d:\n", (*l)++);
                         fflush(file);
                     }
                 }
-        | enquanto { desempilhar(); }
-        | para { desempilhar(); }
-        | aborte { if (count_if_else == 0) desempilhar(); }
-        | saia { if (count_if_else == 0) desempilhar(); }
+        | enquanto { desempilhar(queue_geral); }
+        | para { desempilhar(queue_geral); }
+        | aborte { if (count_if_else == 0) desempilhar(queue_geral); }
+        | saia { if (count_if_else == 0) desempilhar(queue_geral); }
         | expressao_logica
-        //| funcao ';' { if (count_if_else == 0) desempilhar(); }
-//        | sentenca { if (count_if_else == 0) desempilhar(); }
-        | declaracao ';' { if (count_if_else == 0) desempilhar(); }
-	| atribuicao ';' { if (count_if_else == 0) desempilhar(); } 
-        | expressao ';' { if (count_if_else == 0) desempilhar(); } 
+        //| funcao ';' { if (count_if_else == 0) desempilhar(queue_geral); }
+        | sentenca { if (count_if_else == 0) desempilhar(queue_geral); }
+        | declaracao ';' { if (count_if_else == 0) desempilhar(queue_geral); }
+	| atribuicao ';' { if (count_if_else == 0) desempilhar(queue_geral); } 
+        | expressao ';' { if (count_if_else == 0) desempilhar(queue_geral); } 
 	| bloco_instrucao
         | ';' { if (count_if_else == 0) {
                     fprintf(file, "\tnop(NULL, NULL, NULL);\n");
@@ -657,10 +680,30 @@ conjunto_instrucao:
 	instrucao
 	| conjunto_instrucao instrucao
 	;
+
+imprime_data_bss: {
+		    
+            	    fprintf(file,
+			"\tPUSH 0\n"
+			"\tPUSH _EXIT\n"
+			"\tSYS\n\n");
+		    if (chamou_leia) {
+		    	imprima_procedimento_read();
+		    }
+
+		    fprintf(file, ".SECT .DATA\n");
+		    desempilhar(queue_data);
+
+            	    fprintf(file,
+			"\n.SECT .BSS\n"
+			"EOF = '\\n'\n");
+		    desempilhar(queue_bss);
+	          }
+
 bloco_instrucao:
-	INICIO ';' imprimir_label FIM ';' {
+	INICIO ';' imprimir_label FIM ';' imprime_data_bss {
                            }
-	| INICIO ';' imprimir_label conjunto_instrucao FIM ';' {
+	| INICIO ';' imprimir_label conjunto_instrucao FIM ';' imprime_data_bss {
                                                 }
 	;
 imprimir_label: {
@@ -670,6 +713,13 @@ imprimir_label: {
 %%
 
 void load(tabelaSimb *s) {
+	if (s->tipoD == tipoConStr) {
+	    //printf("%s %s\n", $1->tval, $1->sval);
+            sprintf(command,
+		"%s: .ASCIZ \"%s\\n\"\n",
+		s->tval, s->sval);
+		enqueue(queue_data, strdup(command));
+	}
     /*switch (s->tipoD) {
         case tipoConInt:
             sprintf(command, "\tloadi(%d, NULL, &%s);\n", s->ival, s->tval);
@@ -687,7 +737,7 @@ void load(tabelaSimb *s) {
     //enqueue(queue_geral, strdup(command));
 }
 
-tabelaSimb *mnemonico(tabelaSimb *s1, tabelaSimb *s2, char cmd[500]) {
+tabelaSimb *mnemonico(tabelaSimb *s1, tabelaSimb *s2, char cmd[10000]) {
     tabelaSimb *s = alloc_tabelaSimb();
 
     if (s2 != NULL) {
@@ -816,10 +866,10 @@ int *copy_int(int *value) {
     return copy;
 }
 
-void desempilhar(void) {
+void desempilhar(Queue *queue) {
     char *value; 
-    while (!is_queue_empty(queue_geral)) {
-        value = dequeue(queue_geral);
+    while (!is_queue_empty(queue)) {
+        value = dequeue(queue);
         if (!strcmp(value, "jump_incondicional")) {
             fprintf(file, "\tJMP l%d\n", *l);
         }
@@ -842,6 +892,26 @@ void verificaUso(tabelaSimb *s) {
         yyerror(error);
 }
 
+void imprima_procedimento_read() {
+	fprintf(file,
+		"readstring:\n"
+		"\tPOP AX\n"
+		"\tPOP DI\n"
+		"\tPUSH AX\n"
+		"\tPUSH _GETCHAR\n"
+		"1:\n"
+		"\tSYS\n"
+		"\tCMP AX,EOF\n"
+		"\tJE 9f\n"
+		"\tSTOSB\n"
+		"\tJMP 1b\n"
+		"9:\n"
+		"\tMOVB (DI),0\n"
+		"\tADD SP, 2\n"
+		"\tRET\n\n"
+		);
+}
+
 void geraSaidaTemplate(FILE *file) {
     fprintf(file,
                 "!\tGerado pelo compilador PORTUGOL versao 0.1\n"
@@ -849,14 +919,10 @@ void geraSaidaTemplate(FILE *file) {
                 "!\t\t Marlon Chalegre, Rodrigo Castro\n"
                 "!\tEmail: {msgprado, truetypecode, elton.oliver,\n"
                 "!\t\tmarlonchalegre, rodrigomsc}@gmail.com\n"
-                "!\tData: 26/05/2009\n"
-                //";\n#include <stdlib.h>\n"
-                //";#include \"quadruplas.h\"\n"
-                //";#include \"saida.h\"\n\n"
-                //";void filltf();\n\n"                
-                //";int main(void)\n{\n"
-                //";\tfilltf();\n\n"
+                "!\tData: 26/05/2009\n\n"
 		"_EXIT = 1\n"
+		"_PRINTF = 127\n"
+		"_GETCHAR = 117\n\n"
 		".SECT .TEXT\n"
 		"main:\n"
                 );
@@ -962,6 +1028,8 @@ int main(int argc, char **argv) {
     stack_para_label = init_stack();
     stack_para_atribuicao = init_stack();
     queue_geral = init_queue();
+    queue_data = init_queue();
+    queue_bss = init_queue();
 
     if(!file){
         printf("O arquivo nao pode ser aberto!\n");
@@ -982,7 +1050,7 @@ int main(int argc, char **argv) {
     yyparse();
     if (argc > 1) fclose(yyin);    
 
-    fprintf(file,"\tPUSH 0\n\tPUSH _EXIT\n\tSYS\n.SECT .DATA \n\n");
+    //fprintf(file,"\tPUSH 0\n\tPUSH _EXIT\n\tSYS\n\n");
     //criar_filltf();
     fclose(file);
     geraSaidaH();
