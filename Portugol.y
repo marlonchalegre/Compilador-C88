@@ -48,7 +48,7 @@
 %token INT TEXTO 
 %token IF
 %token ENQUANTO PARA
-%token IMPRIMA ABORTE SAIA LEIA 
+%token IMPRIMA ABORTE LEIA 
 %token MAIORIGUAL IGUAL MENORIGUAL DIFERENTE
 %right '='
 %left '<' '>' MENORIGUAL MAIORIGUAL IGUAL DIFERENTE
@@ -78,13 +78,12 @@ declaracao:
         | TEXTO ATOMO {
                                 verificaUso($2); 
                                 $2->tipoD = tipoIdStr; 
+				sprintf(command,
+					"strd%d: .SPACE 80\n",
+					$2->idx);
+                            	enqueue(queue_bss, strdup(command));
                                 $2->load = 1;
-				sprintf(command, "strd%d", $2->idx);
-			    	$2->tval = strdup(command);
-			    	sprintf(command,
-					"%s: .SPACE 80\n",
-					$2->tval);
-                                enqueue(queue_bss, strdup(command));
+				
                             }
 
         ;
@@ -92,7 +91,11 @@ declaracao:
 atribuicao:
         ATOMO '=' expressao {
                                 validaTipoAtribuicao($1, $3);
-                                sprintf(command,"\tMOV (%d), %s\n", $1->idx, $3->tval);
+				if ($1->tipoD == tipoIdStr) {
+				    sprintf(command, "(%d)", $1->idx);
+			    	    $1->tval = strdup(command);
+				}
+                                sprintf(command,"\tMOV %s, %s\n", $1->tval, $3->tval);
                                 enqueue(queue_geral, strdup(command) );
                                 $$ = $3;
 			    }
@@ -245,7 +248,7 @@ expressao:
 					sprintf(command,
 						"\tMOV AX, %s\n"
 						"\tMOV CX, %s\n"
-						"\tMUL CX\n"
+						"\tIMUL CX\n"
 						"\tMOV DX, AX\n",
 						$1->tval, $3->tval);
                                         $$ = mnemonico($1, $3, strdup(command));
@@ -255,7 +258,7 @@ expressao:
 					sprintf(command,
 						"\tMOV AX, %s\n"
 						"\tMOV CX, %s\n"
-						"\tDIV CX\n"
+						"\tIDIV CX\n"
 						"\tMOV DX, AX\n",
 						$1->tval, $3->tval);
                                         $$ = mnemonico($1, $3, strdup(command));
@@ -286,8 +289,13 @@ expressao:
 				    }
 
         | '-' expressao %prec UMINUS {
-                                        //sprintf(command,"\tuminus(%s, NULL, &tp[%d]);\n", $2->tval, tp_count++);
-                                        //$$ = mnemonico($2, NULL, strdup(command));
+					sprintf(command,
+						"\tMOV AX, %s\n"
+						"\tMOV CX, -1\n"
+						"\tIMUL CX\n"
+						"\tMOV DX, AX\n",
+						$2->tval);
+                                        $$ = mnemonico($2, NULL, strdup(command));
                                      }
 
         | '(' expressao ')'         { $$ = $2; }
@@ -313,6 +321,8 @@ sentenca:
 			    if ($3->tipoD != tipoIdStr) {
 			        yyerror("O comando imprima aceita apenas variaveis de texto.");
 			    }
+			    sprintf(command, "strd%d", $3->idx);
+			    $3->tval = strdup(command);
 			    chamou_leia = 1;
 			    sprintf(command,
 			   	"\tPUSH %s\n"
@@ -474,30 +484,11 @@ expressao_logica:
                 ;
 
 aborte:
-     '(' ABORTE ')' ';' {
-                    sprintf(command, "\thalt(NULL, NULL, NULL);\n");
+     ABORTE ';' {
+                    sprintf(command, "\tHLT\n");
                     enqueue(queue_geral, strdup(command));
                  }
       ;
-
-saia:
-    SAIA '(' ATOMO ')' ';' {
-                                switch ($3->tipoD) {
-                                    case tipoConInt:
-                                        if (!$3->load)
-                                            load($3);
-                                    case tipoIdInt:
-                                        sprintf(command, "\tparam(%s, NULL, NULL);\n", $3->tval);
-                                        enqueue(queue_geral, strdup(command));
-                                        break;
-                                    default:
-                                        yyerror("Parametro deve ser um inteiro.");
-                                        break;
-                                }
-                                sprintf(command, "\tcall(\"exit\", 1, NULL);\n");
-                                enqueue(queue_geral, strdup(command));
-                           }
-    ;
 
 instrucao:
 	selecao { 
@@ -510,7 +501,6 @@ instrucao:
                 }
         | enquanto { desempilhar(queue_geral); }
         | aborte { if (count_if_else == 0) desempilhar(queue_geral); }
-        | saia { if (count_if_else == 0) desempilhar(queue_geral); }
         | expressao_logica
         | sentenca { if (count_if_else == 0) desempilhar(queue_geral); }
         | declaracao ';' { if (count_if_else == 0) desempilhar(queue_geral); }
@@ -518,10 +508,10 @@ instrucao:
         | expressao ';' { if (count_if_else == 0) desempilhar(queue_geral); } 
 	| bloco_instrucao
         | ';' { if (count_if_else == 0) {
-                    fprintf(file, "\tnop(NULL, NULL, NULL);\n");
+                    fprintf(file, "\tNOP\n");
                     fflush(file);
                 } else {
-                    enqueue(queue_geral,"\tnop(NULL, NULL, NULL);\n");
+                    enqueue(queue_geral,"\tNOP\n");
                 }
         }
 	;

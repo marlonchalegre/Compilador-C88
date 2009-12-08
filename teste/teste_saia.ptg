@@ -1,0 +1,9 @@
+inicio;
+int a;
+a = 1;
+;;;
+se (a == 2) entao
+  aborte;
+senao
+  a = 2;
+fim;

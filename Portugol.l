@@ -40,6 +40,7 @@ float ([0-9]*\.[0-9]+)([eE][-+]?[0-9]+)?
 "e"         { return AND; }
 "ou"        { return OR; }
 "nao"       { return NOT; }
+"aborte"    { return ABORTE; }
 ;           { return *yytext;}
 
 
@@ -68,17 +69,11 @@ float ([0-9]*\.[0-9]+)([eE][-+]?[0-9]+)?
                         else if (!strcmp(val, "nao")) {
                             return NOT;
                         }
-                        else if (!strcmp(val, "para")) {
-                            return PARA;
-                        }
                         else if (!strcmp(val, "enquanto")) {
                             return ENQUANTO;
                         }
                         else if (!strcmp(val, "se")) {
                             return IF;
-                        }
-                        else if (!strcmp(val, "aborte")) {
-                            return ABORTE;
                         }
 			else if (!strcmp(val, "imprima")) {
 			    return IMPRIMA;
