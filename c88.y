@@ -30,7 +30,7 @@
     void verificaUso(tabelaSimb *s);
     int yylineno;
     int cond_count = 1;
-    int cond_mem = 500;
+    int cond_mem = 900;
     int *l;
     int count_if_else = 0;
     int chamou_leia = 0;
@@ -561,7 +561,7 @@ imprimir_label: {
 void load(tabelaSimb *s) {
     if (s->tipoD == tipoConStr) {
         sprintf(command,
-            "%s: .ASCIZ \"%s\\n\"\n",
+            "%s: .ASCIZ \"%s\"\n",
 	    s->tval, s->sval);
         enqueue(queue_data, strdup(command));
     }

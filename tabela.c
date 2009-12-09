@@ -18,7 +18,7 @@
 #include "tabela.h"
 
 char buffer[100];
-int idxId = 30;
+int idxId = 200;
 int strxId = 1;
 int idxCon = 30;
 
